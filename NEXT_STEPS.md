@@ -21,7 +21,7 @@ Nothing has been signed up for, funded, submitted, or published on your behalf. 
    ```bash
    cp .env.example .env   # fill MEMWAL_*, TATUM_API_KEY, WATCH_ADDRESS, SECOND_THOUGHT_MODE=live
    npm run memories:preview
-   npm run memories:store -- --confirm
+   npm run memories:store
    npm run memories:verify         # must report ≥ 10
    ```
    Optional but recommended: edit `seed/journal.ts` first if you want your own data, and then run the live app and make a few real pre-flights + outcomes, so some of the mainnet memories came from actually using it.

@@ -53,7 +53,7 @@ Second Thought is a pre-flight check for money moves. You say what you're about 
 
 - [ ] Tatum API key created; `npm run check:tatum` passes
 - [ ] MemWal account + delegate key created at memory.walrus.xyz; wallet funded as needed
-- [ ] `.env` filled (never committed); `npm run memories:store -- --confirm` run against hosted relayer (mainnet)
+- [ ] `.env` filled (never committed); `npm run memories:store` run against hosted relayer (mainnet)
 - [ ] `npm run memories:verify` shows ≥ 10 memories (aim for 15+, including a few made by really using the app)
 - [ ] App in live mode shows **Walrus mainnet** + **Tatum · Sui mainnet** pills
 - [ ] Repo public on GitHub; no secrets (`git ls-files | grep -E "^\.env"` shows only `.env.example`); README placeholders updated
