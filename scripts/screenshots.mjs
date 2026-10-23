@@ -1,0 +1,45 @@
+// Optional: `npm i --no-save puppeteer-core`, run the app (npm run dev), then `node scripts/screenshots.mjs http://127.0.0.1:9011 ./screenshots`. Uses system Chrome.
+import puppeteer from "puppeteer-core";
+const base = process.argv[2] ?? "http://127.0.0.1:9011";
+const out = process.argv[3] ?? "/workspace/hackathon-projects/walrus-second-thought/screenshots";
+const browser = await puppeteer.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox", "--disable-gpu", "--hide-scrollbars"], headless: "new" });
+const page = await browser.newPage();
+await page.setViewport({ width: 1560, height: 1000, deviceScaleFactor: 1.5 });
+const errs = [];
+page.on("pageerror", (e) => errs.push("pageerror " + e.message));
+page.on("console", (m) => { if (m.type() === "error") errs.push("console " + m.text()); });
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const clickText = async (sel, text) => { const h = await page.evaluateHandle((s, t) => [...document.querySelectorAll(s)].find((e) => e.textContent.includes(t)), sel, text); await h.asElement().click(); };
+await fetch(base + "/api/demo/reset", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ to: "seed" }) });
+await page.goto(base, { waitUntil: "networkidle0" });
+await wait(1500);
+await page.screenshot({ path: `${out}/01-preflight-idle.png` });
+await clickText("button", "Kofi's 2 AM panic sell"); await wait(300);
+await page.screenshot({ path: `${out}/02-composer-panic.png` });
+await clickText("button", "Ask Second Thought"); await wait(1100);
+await page.screenshot({ path: `${out}/03-thinking.png` });
+await wait(3500);
+await page.screenshot({ path: `${out}/04-verdict-stop.png` });
+// hover a memory chip to highlight in rail
+const chip = await page.evaluateHandle(() => [...document.querySelectorAll("button")].find((e) => /\d+ memories/.test(e.textContent)));
+await chip.asElement().hover(); await wait(700);
+await page.screenshot({ path: `${out}/05-memory-highlight.png` });
+const hold = await page.evaluateHandle(() => [...document.querySelectorAll("button")].find((e) => e.textContent.includes("Hold to proceed")));
+await hold.asElement().hover(); await wait(500);
+await page.mouse.down(); await wait(500);
+await wait(1800); await page.mouse.up(); await wait(900);
+await page.evaluate(() => window.scrollTo(0, 700)); await wait(600);
+await page.screenshot({ path: `${out}/06-outcome.png` });
+await clickText("button", "Seal this in memory"); await wait(1800);
+await page.screenshot({ path: `${out}/07-learned.png` });
+await page.evaluate(() => window.scrollTo(0, 0));
+await clickText("nav button", "Journal"); await wait(2000);
+await page.screenshot({ path: `${out}/08-journal.png` });
+await clickText("nav button", "Learning"); await wait(4500);
+await page.screenshot({ path: `${out}/09-learning.png` });
+// mobile
+await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 });
+await clickText("nav button", "Pre-flight"); await wait(1200);
+await page.screenshot({ path: `${out}/10-mobile.png` });
+console.log(errs.length ? errs.join("\n") : "no console errors");
+await browser.close();
