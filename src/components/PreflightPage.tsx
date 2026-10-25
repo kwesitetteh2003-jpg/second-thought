@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Intent } from "../../shared/types";
 import { api, type OutcomeResponse, type PreflightResponse } from "../lib/api";
 import { useApp } from "../lib/store";
+import { SCENARIOS } from "../lib/ui";
 import { Composer } from "./Composer";
 import { LearnedPanel } from "./LearnedPanel";
 import { OutcomeLogger } from "./OutcomeLogger";
@@ -10,7 +11,7 @@ import { WalletStrip } from "./WalletStrip";
 
 const DEFAULT: Intent = { action: "sell", asset: "SUI", pct: 20, trigger: "planned", mood: "calm", hour: 14 };
 
-export function PreflightPage({ resetKey, goLearning }: { resetKey: number; goLearning: () => void }) {
+export function PreflightPage({ resetKey, preset = 0, goLearning }: { resetKey: number; preset?: number; goLearning: () => void }) {
   const { refresh, setLastIntent, markFresh, wallet } = useApp();
   const [intent, setIntent] = useState<Intent>(DEFAULT);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ export function PreflightPage({ resetKey, goLearning }: { resetKey: number; goLe
   const tail = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
 
+  useEffect(() => { if (preset > 0) { setIntent({ ...SCENARIOS[0].intent }); setRes(null); setChoice(null); setOut(null); } }, [preset]);
   useEffect(() => { setRes(null); setChoice(null); setOut(null); setErr(null); }, [resetKey]);
   useEffect(() => { if (wallet && !wallet.balances.some((b) => b.symbol === intent.asset)) setIntent((i) => ({ ...i, asset: wallet.balances[0]?.symbol ?? i.asset })); }, [wallet, intent.asset]);
 
@@ -52,16 +54,16 @@ export function PreflightPage({ resetKey, goLearning }: { resetKey: number; goLe
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <WalletStrip />
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
         <Composer intent={intent} onChange={setIntent} onSubmit={ask} loading={loading} stage={stage} />
         <div className="space-y-6">
           <div ref={top} className="scroll-mt-24" />
-          {err && !busy && !out && <div className="rounded-2xl border border-flare/40 bg-flare/10 p-4 text-[13.5px] text-flare" role="alert">{err}</div>}
+          {err && !busy && !out && <div className="rounded-[3px] border-l-2 border-stop bg-stop/5 p-4 text-[13.5px] text-stop" role="alert">{err}</div>}
           {res ? <VerdictPanel key={res.decision.id} res={res} choice={choice} onChoice={decide} /> : <Idle />}
           {res && choice !== null && !out && <OutcomeLogger acted={choice} busy={busy} onSeal={seal} error={err} />}
-          {out && <LearnedPanel res={out} onAgain={() => { setRes(null); setChoice(null); setOut(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} onLearning={goLearning} />}
+          {out && <LearnedPanel res={out} onAgain={() => { setRes(null); setChoice(null); setOut(null); document.getElementById("desk")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onLearning={goLearning} />}
           <div ref={tail} />
         </div>
       </div>

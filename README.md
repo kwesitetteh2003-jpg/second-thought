@@ -180,4 +180,20 @@ No secret is in this repo. `.env*` (except `.env.example`) is git-ignored, and `
 
 `DEMO_SCRIPT.md` (2 to 3 min video plan) · `BLOG_POST.md` (draft of the required post) · `SUBMISSION.md` (field-by-field answers and checklist) · `NEXT_STEPS.md` (what only you can do, with dates in Accra time).
 
+## 9. Design, photos and type
+
+The interface is set like a printed ledger: warm paper, ink, and three earth-pigment verdict colours (green GO, ochre PAUSE, brick STOP), with indigo for memory and one ember accent. The landing story uses scroll-linked motion (Framer Motion `useScroll`/`useTransform`): a sticky "2 AM" scene whose clock and copy are scrubbed by scroll, plus light parallax on the photos. With `prefers-reduced-motion` the story renders as a static page.
+
+**Photos** (real photographs, Pexels License, free to use; resized to 640/1080/1600 px WebP and self-hosted in `public/photos/`, no AI-generated people):
+
+| File | Photographer | Source |
+| --- | --- | --- |
+| `kofi-phone-*.webp` | Zeal Creative Studios | https://www.pexels.com/photo/young-ghanaian-man-engaged-with-smartphone-34439202/ |
+| `night-phone-*.webp` | Kenneth Surillo | https://www.pexels.com/photo/lying-man-using-smartphone-20885707/ |
+| `accra-market-*.webp` | Zeal Creative Studios | https://www.pexels.com/photo/bustling-market-scene-in-accra-ghana-36392318/ |
+
+Photographers are also credited on the page under each photo and in the footer.
+
+**Type** (SIL Open Font License, Latin subsets self-hosted in `public/fonts/` from Fontsource): Instrument Serif (headlines), Schibsted Grotesk (text), IBM Plex Mono (numbers and data).
+
 Licence: MIT.

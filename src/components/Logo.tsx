@@ -1,14 +1,8 @@
-export function Logo({ size = 30 }: { size?: number }) {
+/** Typographic wordmark: no glyph, just the name set in the display serif. */
+export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
-      <defs>
-        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#5ef2d0" />
-          <stop offset="1" stopColor="#5b8cff" />
-        </linearGradient>
-      </defs>
-      <path d="M44 20a17 17 0 1 0 2 15" fill="none" stroke="url(#lg)" strokeWidth="5.5" strokeLinecap="round" />
-      <circle cx="32" cy="32" r="4.6" fill="#5ef2d0" />
-    </svg>
+    <span className="serif whitespace-nowrap text-[24px] leading-none tracking-[-0.015em] text-ink sm:text-[26px]">
+      Second{compact ? " " : " "}<em className="text-ember">Thought</em>
+    </span>
   );
 }

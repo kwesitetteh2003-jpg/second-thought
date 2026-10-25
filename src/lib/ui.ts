@@ -7,11 +7,15 @@ export const pct = (n: number) => `${n > 0 ? "+" : ""}${Math.round(n * 10) / 10}
 export const num = (n: number, d = 0) => n.toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
 export const short = (a: string) => (a.length > 14 ? `${a.slice(0, 8)}…${a.slice(-6)}` : a);
 
-export const LEVEL: Record<Level, { word: string; color: string; glow: string; text: string }> = {
-  go: { word: "GO", color: "#5ef2d0", glow: "rgba(94,242,208,0.35)", text: "text-tide" },
-  pause: { word: "PAUSE", color: "#ffb84d", glow: "rgba(255,184,77,0.35)", text: "text-amber" },
-  stop: { word: "STOP", color: "#ff4d6a", glow: "rgba(255,77,106,0.4)", text: "text-flare" },
+/** Verdict colours: earth pigments that read as text on the paper background. */
+export const LEVEL: Record<Level, { word: string; color: string; wash: string; text: string }> = {
+  go: { word: "GO", color: "#2c6a4c", wash: "rgba(44,106,76,0.09)", text: "text-go" },
+  pause: { word: "PAUSE", color: "#9a5b0b", wash: "rgba(154,91,11,0.09)", text: "text-pause" },
+  stop: { word: "STOP", color: "#ad2f1d", wash: "rgba(173,47,29,0.08)", text: "text-stop" },
 };
+
+/** Shared ink colours for SVG and inline styles (mirror the @theme tokens). */
+export const INK = { ink: "#1d1a16", dim: "#4d463d", faint: "#6b6257", line: "rgba(29,26,22,0.13)", mem: "#2b3f7a", info: "#3c5a8a", go: "#2c6a4c", pause: "#9a5b0b", stop: "#ad2f1d" } as const;
 
 export const TRIGGER_LABEL: Record<Trigger, string> = {
   dip: "Price dip", pump: "Price pump", tip: "A tip", news: "Headline", planned: "My plan", revenge: "Win it back", boredom: "Boredom",

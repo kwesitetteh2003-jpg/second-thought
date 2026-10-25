@@ -1,107 +1,128 @@
 import { motion } from "framer-motion";
-import { Check, ChevronsRight, Clock, Flame, Frown, Heart, MessageCircle, Newspaper, ClipboardCheck, Swords, Coffee, TrendingDown, TrendingUp, Zap, Smile, Angry, Loader2 } from "lucide-react";
-import type { Action, Intent, Mood, Trigger } from "../../shared/types";
+import type { Action, Intent } from "../../shared/types";
 import { ACTIONS, MOODS, TRIGGERS } from "../../shared/types";
-import { ACTION_LABEL, MOOD_LABEL, MOOD_TONE, SCENARIOS, TRIGGER_LABEL, WHEN, num } from "../lib/ui";
+import { ACTION_LABEL, INK, MOOD_LABEL, MOOD_TONE, SCENARIOS, TRIGGER_LABEL, WHEN, num } from "../lib/ui";
 import { useApp } from "../lib/store";
 
-const TRIG_ICON: Record<Trigger, typeof Flame> = { dip: TrendingDown, pump: TrendingUp, tip: MessageCircle, news: Newspaper, planned: ClipboardCheck, revenge: Swords, boredom: Coffee };
-const MOOD_ICON: Record<Mood, typeof Flame> = { calm: Smile, fearful: Frown, fomo: Flame, angry: Angry, excited: Zap };
-
-function Label({ children, hint }: { children: React.ReactNode; hint?: string }) {
+function Label({ n, children, hint }: { n: string; children: React.ReactNode; hint?: string }) {
   return (
-    <div className="mb-3 flex items-baseline justify-between">
-      <span className="eyebrow">{children}</span>
-      {hint && <span className="text-[11.5px] text-faint">{hint}</span>}
+    <div className="mb-3 flex items-baseline justify-between gap-3">
+      <span className="flex items-baseline gap-2.5">
+        <span className="mono text-[11px] text-faint">{n}</span>
+        <span className="text-[14px] font-semibold">{children}</span>
+      </span>
+      {hint && <span className="text-right text-[12px] text-faint">{hint}</span>}
     </div>
   );
 }
+
+const same = (a: Intent, b: Partial<Intent>) => (Object.keys(b) as (keyof Intent)[]).every((k) => a[k] === b[k]);
 
 export function Composer({ intent, onChange, onSubmit, loading, stage }: { intent: Intent; onChange: (i: Intent) => void; onSubmit: () => void; loading: boolean; stage: number }) {
   const { wallet } = useApp();
   const set = <K extends keyof Intent>(k: K, v: Intent[K]) => onChange({ ...intent, [k]: v });
   const bal = wallet?.balances.find((b) => b.symbol === intent.asset)?.amount ?? 0;
   const amt = (bal * intent.pct) / 100;
-  const hot = intent.pct > 50 ? "#ff4d6a" : intent.pct > 25 ? "#ffb84d" : "#5ef2d0";
+  const hot = intent.pct > 50 ? INK.stop : intent.pct > 25 ? INK.pause : INK.ink;
   const steps = ["Reading your wallet on Sui via Tatum", "Recalling similar moments from Walrus Memory", "Weighing what happened last time"];
 
   return (
-    <div className="panel p-6 sm:p-7">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="panel p-5 sm:p-8">
+      <h2 className="serif text-[36px] leading-[1] sm:text-[42px]">About to make a move?</h2>
+      <p className="mt-3 max-w-[44ch] text-[14.5px] leading-relaxed text-dim">Tell me what you're about to do. I'll check it against what actually happened the last times.</p>
+
+      <div className="mt-7 border-t border-line">
+        <p className="eyebrow pb-1 pt-4">Or open a case</p>
+        {SCENARIOS.map((s, i) => {
+          const on = same(intent, s.intent);
+          return (
+            <button
+              key={s.id}
+              onClick={() => onChange({ ...intent, ...s.intent })}
+              aria-pressed={on}
+              className="group grid w-full grid-cols-[52px_1fr_auto] items-baseline gap-x-3 border-b border-line py-3 text-left transition-colors hover:bg-ink/[0.03]"
+            >
+              <span className="mono text-[11px] text-faint">Case 0{i + 1}</span>
+              <span className="min-w-0">
+                <span className={`block text-[14.5px] font-semibold ${on ? "text-ember" : ""}`}>{s.title}</span>
+                <span className="mono mt-0.5 block truncate text-[10.5px] text-faint">{s.sub}</span>
+              </span>
+              <span aria-hidden className={`text-[15px] transition-transform duration-300 group-hover:translate-x-1 ${on ? "text-ember" : "text-faint"}`}>{on ? "●" : "→"}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-8 space-y-7">
         <div>
-          <h2 className="text-[26px] font-semibold leading-[1.1] tracking-tight"><span className="text-gradient">About to make a move?</span></h2>
-          <p className="mt-2 max-w-[44ch] text-[14px] leading-relaxed text-dim">Tell me what you're about to do. I'll check it against what actually happened the last times.</p>
+          <Label n="A">I want to</Label>
+          <div className="grid grid-cols-4 border border-ink" role="radiogroup" aria-label="Action">
+            {ACTIONS.map((a: Action, i) => (
+              <button key={a} role="radio" aria-checked={intent.action === a} onClick={() => set("action", a)} className={`relative py-2.5 text-[14px] font-semibold transition-colors ${i ? "border-l border-ink" : ""} ${intent.action === a ? "text-paper" : "text-ink hover:bg-ink/5"}`}>
+                {intent.action === a && <motion.span layoutId="act" className="absolute inset-0 bg-ink" transition={{ type: "spring", stiffness: 480, damping: 38 }} />}
+                <span className="relative">{ACTION_LABEL[a]}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label n="B" hint={`≈ ${num(amt, amt < 10 ? 3 : 0)} ${intent.asset} of ${num(bal, bal < 10 ? 3 : 0)}`}>How much of my {intent.asset}</Label>
+          <div className="flex items-end justify-between">
+            <div className="flex gap-1.5">
+              {(wallet?.balances ?? []).map((b) => (
+                <button key={b.symbol} className="chip !px-3 !py-1.5 !text-[12.5px]" data-on={intent.asset === b.symbol} onClick={() => set("asset", b.symbol)}>{b.symbol}</button>
+              ))}
+            </div>
+            <div className="serif tnum text-[56px] leading-[0.8] transition-colors" style={{ color: hot }}>
+              {intent.pct}<span className="text-[28px] text-faint">%</span>
+            </div>
+          </div>
+          <div className="relative mt-1">
+            <div className="pointer-events-none absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 bg-ink/10">
+              <div className="h-full transition-colors" style={{ width: `${intent.pct}%`, background: hot }} />
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between" aria-hidden>
+              {[0, 25, 50, 75, 100].map((t) => <span key={t} className="h-2.5 w-px bg-ink/25" />)}
+            </div>
+            <input aria-label="Share of balance" className="slider relative" type="range" min={1} max={100} value={intent.pct} onChange={(e) => set("pct", Number(e.target.value))} style={{ ["--thumb" as string]: hot }} />
+          </div>
+        </div>
+
+        <div>
+          <Label n="C" hint="what's driving it?">Because of</Label>
+          <div className="flex flex-wrap gap-2">
+            {TRIGGERS.map((t) => <button key={t} className="chip" data-on={intent.trigger === t} onClick={() => set("trigger", t)}>{TRIGGER_LABEL[t]}</button>)}
+          </div>
+        </div>
+
+        <div>
+          <Label n="D" hint="be honest, nobody's watching">I'm feeling</Label>
+          <div className="flex flex-wrap gap-2">
+            {MOODS.map((m) => (
+              <button key={m} className="chip" data-tone={MOOD_TONE[m] === "bad" ? "bad" : MOOD_TONE[m] === "warn" ? "warn" : undefined} data-on={intent.mood === m} onClick={() => set("mood", m)}>{MOOD_LABEL[m]}</button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label n="E" hint={`${String(intent.hour).padStart(2, "0")}:00`}>It's</Label>
+          <div className="flex flex-wrap gap-2">
+            {WHEN.map((w) => <button key={w.label} className="chip" data-on={intent.hour === w.hour} onClick={() => set("hour", w.hour)}>{w.label}</button>)}
+          </div>
         </div>
       </div>
 
-      <div className="mb-6 grid gap-2 sm:grid-cols-3">
-        {SCENARIOS.map((s) => (
-          <button key={s.id} className="group min-w-0 rounded-xl border border-line bg-white/[0.025] px-3 py-2 text-left transition hover:border-line-2 hover:bg-white/[0.06]" onClick={() => onChange({ ...intent, ...s.intent })}>
-            <span className="flex items-center gap-1 text-[12px] font-semibold leading-tight"><ChevronsRight size={13} className="shrink-0 text-tide transition group-hover:translate-x-0.5" />{s.title}</span>
-            <span className="mono mt-1 block truncate text-[10px] text-faint">{s.sub}</span>
-          </button>
-        ))}
-      </div>
-
-      <Label>I want to</Label>
-      <div className="mb-6 grid grid-cols-4 gap-1 rounded-2xl border border-line bg-black/30 p-1" role="radiogroup" aria-label="Action">
-        {ACTIONS.map((a: Action) => (
-          <button key={a} role="radio" aria-checked={intent.action === a} onClick={() => set("action", a)} className="relative rounded-xl py-2.5 text-[14px] font-semibold" style={{ color: intent.action === a ? "#05070b" : "#8b95a8" }}>
-            {intent.action === a && <motion.span layoutId="act" className="absolute inset-0 rounded-xl bg-white" transition={{ type: "spring", stiffness: 440, damping: 34 }} />}
-            <span className="relative">{ACTION_LABEL[a]}</span>
-          </button>
-        ))}
-      </div>
-
-      <Label hint={`≈ ${num(amt, amt < 10 ? 3 : 0)} ${intent.asset} of ${num(bal, bal < 10 ? 3 : 0)}`}>How much of my {intent.asset}</Label>
-      <div className="mb-1 flex items-end justify-between">
-        <div className="flex gap-1.5">
-          {(wallet?.balances ?? []).map((b) => (
-            <button key={b.symbol} className="chip !px-3 !py-1.5 !text-[12.5px]" data-on={intent.asset === b.symbol} onClick={() => set("asset", b.symbol)}>{b.symbol}</button>
-          ))}
-        </div>
-        <motion.div key={intent.pct} initial={{ y: -4, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} className="tnum text-[44px] font-semibold leading-none tracking-tight" style={{ color: hot }}>
-          {intent.pct}<span className="text-[22px] text-faint">%</span>
-        </motion.div>
-      </div>
-      <div className="relative mb-6">
-        <div className="pointer-events-none absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-white/[0.08]">
-          <div className="h-full rounded-full transition-colors" style={{ width: `${intent.pct}%`, background: `linear-gradient(90deg, #5ef2d0, ${hot})` }} />
-        </div>
-        <input aria-label="Share of balance" className="slider relative" type="range" min={1} max={100} value={intent.pct} onChange={(e) => set("pct", Number(e.target.value))} style={{ ["--thumb" as string]: hot }} />
-      </div>
-
-      <Label hint="what's driving it?">Because of</Label>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {TRIGGERS.map((t) => { const I = TRIG_ICON[t]; return (
-          <button key={t} className="chip" data-on={intent.trigger === t} onClick={() => set("trigger", t)}><I size={14} />{TRIGGER_LABEL[t]}</button>
-        ); })}
-      </div>
-
-      <Label hint="be honest, nobody's watching">I'm feeling</Label>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {MOODS.map((m) => { const I = MOOD_ICON[m]; return (
-          <button key={m} className="chip" data-tone={MOOD_TONE[m] === "bad" ? "bad" : MOOD_TONE[m] === "warn" ? "warn" : undefined} data-on={intent.mood === m} onClick={() => set("mood", m)}><I size={14} />{MOOD_LABEL[m]}</button>
-        ); })}
-      </div>
-
-      <Label hint={`${String(intent.hour).padStart(2, "0")}:00`}>It's</Label>
-      <div className="mb-8 flex flex-wrap gap-2">
-        {WHEN.map((w) => (
-          <button key={w.label} className="chip" data-on={intent.hour === w.hour} onClick={() => set("hour", w.hour)}><Clock size={14} />{w.label}</button>
-        ))}
-      </div>
-
-      <button className="btn-primary w-full text-[16px]" onClick={onSubmit} disabled={loading || !wallet}>
-        {loading ? <Loader2 size={18} className="animate-spin" /> : <Heart size={18} />}
+      <button className="btn-primary group mt-9 w-full text-[16px]" onClick={onSubmit} disabled={loading || !wallet}>
         {loading ? "Thinking it over…" : "Ask Second Thought"}
+        {!loading && <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">→</span>}
       </button>
 
       {loading && (
-        <ol className="mt-4 space-y-1.5" aria-live="polite">
+        <ol className="mt-5 space-y-2" aria-live="polite">
           {steps.map((s, i) => (
-            <motion.li key={s} initial={{ opacity: 0, x: -8 }} animate={{ opacity: stage >= i ? 1 : 0.25, x: 0 }} className="flex items-center gap-2.5 text-[12.5px] text-dim">
-              <span className="grid h-4 w-4 place-items-center rounded-full" style={{ background: stage > i ? "#5ef2d0" : "rgba(255,255,255,0.08)" }}>{stage > i ? <Check size={11} className="text-[#031512]" strokeWidth={3} /> : stage === i ? <Loader2 size={10} className="animate-spin" /> : null}</span>
+            <motion.li key={s} initial={{ opacity: 0, x: -6 }} animate={{ opacity: stage >= i ? 1 : 0.3, x: 0 }} className="flex items-center gap-3 text-[12.5px] text-dim">
+              <span className="mono w-8 text-[11px]" style={{ color: stage > i ? INK.go : INK.faint }}>{stage > i ? "done" : stage === i ? <span className="animate-blink">…</span> : `0${i + 1}`}</span>
               {s}
             </motion.li>
           ))}
