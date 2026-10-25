@@ -1,13 +1,15 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Header, type Tab } from "./components/Header";
-import { JournalPage } from "./components/JournalPage";
-import { LearningPage } from "./components/LearningPage";
 import { MemoryRail } from "./components/MemoryRail";
 import { CREDITS } from "./components/Photo";
 import { PreflightPage } from "./components/PreflightPage";
 import { Story } from "./components/Story";
+import { scrollToEl, scrollToTop } from "./lib/smooth";
 import { useApp } from "./lib/store";
+
+const JournalPage = lazy(() => import("./components/JournalPage").then((m) => ({ default: m.JournalPage })));
+const LearningPage = lazy(() => import("./components/LearningPage").then((m) => ({ default: m.LearningPage })));
 
 const DESK_COPY: Record<Tab, [string, string]> = {
   preflight: ["The desk", "A working demo on Kofi's sample journal. Pick a case or set your own move, ask, decide, then log how it went. The notebook on the right changes as you do."],
@@ -24,15 +26,16 @@ export default function App() {
 
   const tryPanic = () => {
     setPreset((n) => n + 1);
-    requestAnimationFrame(() => document.getElementById("desk")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    requestAnimationFrame(() => scrollToEl(document.getElementById("desk"), -72));
   };
   const switchTab = (t: Tab) => {
     setTab(t);
-    if (t !== "preflight") window.scrollTo({ top: 0 });
+    if (t !== "preflight") scrollToTop(true);
   };
 
   return (
     <>
+      <div aria-hidden className="grain" />
       <Header tab={tab} onTab={switchTab} onReset={() => setResetKey((k) => k + 1)} />
       {tab === "preflight" && !error && <Story onTry={tryPanic} />}
       <main id="desk" className="mx-auto max-w-[1320px] scroll-mt-20 px-5 pb-10 pt-12 sm:px-8 lg:pt-16">
@@ -50,10 +53,12 @@ export default function App() {
         {!error && (
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
             <AnimatePresence mode="wait">
-              <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }} className="min-w-0">
+              <motion.div key={tab} initial={{ opacity: 0, y: 14, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -8, filter: "blur(4px)" }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="min-w-0">
                 {tab === "preflight" && <PreflightPage resetKey={resetKey} preset={preset} goLearning={() => setTab("learning")} />}
-                {tab === "journal" && <JournalPage />}
-                {tab === "learning" && <LearningPage />}
+                <Suspense fallback={<div className="min-h-[60vh]" />}>
+                  {tab === "journal" && <JournalPage />}
+                  {tab === "learning" && <LearningPage />}
+                </Suspense>
               </motion.div>
             </AnimatePresence>
             <div className="hidden xl:sticky xl:top-[84px] xl:block"><MemoryRail /></div>

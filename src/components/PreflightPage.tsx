@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { scrollToEl } from "../lib/smooth";
 import type { Intent } from "../../shared/types";
 import { api, type OutcomeResponse, type PreflightResponse } from "../lib/api";
 import { useApp } from "../lib/store";
@@ -34,7 +35,7 @@ export function PreflightPage({ resetKey, preset = 0, goLearning }: { resetKey: 
     const minWait = new Promise((r) => setTimeout(r, 1900));
     try {
       const [r] = await Promise.all([api.preflight(intent), minWait]);
-      setRes(r); setLastIntent(intent); setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+      setRes(r); setLastIntent(intent); setTimeout(() => scrollToEl(top.current, -84), 120);
     } catch (e) { setErr((e as Error).message); }
     finally { clearTimeout(t1); clearTimeout(t2); setLoading(false); }
   };
@@ -63,7 +64,7 @@ export function PreflightPage({ resetKey, preset = 0, goLearning }: { resetKey: 
           {err && !busy && !out && <div className="rounded-[3px] border-l-2 border-stop bg-stop/5 p-4 text-[13.5px] text-stop" role="alert">{err}</div>}
           {res ? <VerdictPanel key={res.decision.id} res={res} choice={choice} onChoice={decide} /> : <Idle />}
           {res && choice !== null && !out && <OutcomeLogger acted={choice} busy={busy} onSeal={seal} error={err} />}
-          {out && <LearnedPanel res={out} onAgain={() => { setRes(null); setChoice(null); setOut(null); document.getElementById("desk")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onLearning={goLearning} />}
+          {out && <LearnedPanel res={out} onAgain={() => { setRes(null); setChoice(null); setOut(null); scrollToEl(document.getElementById("desk"), -72); }} onLearning={goLearning} />}
           <div ref={tail} />
         </div>
       </div>

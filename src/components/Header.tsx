@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { useState } from "react";
 import { api } from "../lib/api";
+import { scrollToTop } from "../lib/smooth";
 import { useApp } from "../lib/store";
 import { Logo } from "./Logo";
 import { StatusPill } from "./StatusPill";
@@ -19,12 +20,14 @@ export function Header({ tab, onTab, onReset }: { tab: Tab; onTab: (t: Tab) => v
     setBusy(true);
     try { await api.reset(to); await refresh(); onReset(); } finally { setBusy(false); }
   };
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 200, damping: 30, restDelta: 0.001 });
   const mem = status?.memory;
   const chain = status?.chain;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1320px] flex-wrap items-center gap-x-8 gap-y-1 px-5 pt-3 sm:px-8 lg:flex-nowrap lg:py-3">
-        <button onClick={() => { onTab("preflight"); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="Second Thought, back to top" className="py-1">
+        <button onClick={() => { onTab("preflight"); scrollToTop(); }} aria-label="Second Thought, back to top" className="py-1">
           <Logo />
         </button>
 
@@ -60,6 +63,7 @@ export function Header({ tab, onTab, onReset }: { tab: Tab; onTab: (t: Tab) => v
           )}
         </div>
       </div>
+      <motion.div aria-hidden style={{ scaleX: progress }} className="absolute inset-x-0 -bottom-px h-[2px] origin-left bg-ember" />
     </header>
   );
 }
