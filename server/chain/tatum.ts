@@ -9,33 +9,48 @@ export interface ChainClient {
 
 type Fetch = typeof fetch;
 
-/** Minimal JSON-RPC client for Tatum's Sui gateway (https://sui-mainnet.gateway.tatum.io). */
+/**
+ * Client for Tatum's Sui mainnet gateway. Sui has retired full-node JSON-RPC, so this uses the
+ * gateway's GraphQL interface (https://sui-mainnet.gateway.tatum.io/graphql) with the x-api-key header.
+ * Read-only: it never signs or sends transactions.
+ */
 export class TatumSui implements ChainClient {
   readonly source = "tatum-sui-rpc" as const;
   private decimalsCache = new Map<string, { symbol: string; decimals: number }>();
-  private id = 0;
 
   constructor(readonly endpoint: string, private apiKey: string, private doFetch: Fetch = fetch) {}
 
-  async rpc<T>(method: string, params: unknown[] = []): Promise<T> {
-    const res = await this.doFetch(this.endpoint, {
+  private get graphqlUrl() {
+    const base = this.endpoint.replace(/\/+$/, "");
+    return base.endsWith("/graphql") ? base : base + "/graphql";
+  }
+
+  async query<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+    const res = await this.doFetch(this.graphqlUrl, {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": this.apiKey },
-      body: JSON.stringify({ jsonrpc: "2.0", id: ++this.id, method, params }),
+      body: JSON.stringify({ query, variables }),
       signal: AbortSignal.timeout(12_000),
     });
-    if (!res.ok) throw new Error(`Tatum ${method} failed: HTTP ${res.status}`);
-    const json = (await res.json()) as { result?: T; error?: { code: number; message: string } };
-    if (json.error) throw new Error(`Tatum ${method} error ${json.error.code}: ${json.error.message}`);
-    return json.result as T;
+    if (!res.ok) throw new Error(`Tatum Sui GraphQL failed: HTTP ${res.status}`);
+    const json = (await res.json()) as { data?: T; errors?: { message: string }[] };
+    if (json.errors?.length) throw new Error(`Tatum Sui GraphQL error: ${json.errors.map((e) => e.message).join("; ")}`);
+    return json.data as T;
+  }
+
+  async latestCheckpoint(): Promise<number> {
+    const d = await this.query<{ checkpoint: { sequenceNumber: number } }>("{ checkpoint { sequenceNumber } }");
+    return Number(d.checkpoint.sequenceNumber);
   }
 
   private async meta(coinType: string): Promise<{ symbol: string; decimals: number }> {
-    if (coinType === "0x2::sui::SUI") return { symbol: "SUI", decimals: 9 };
+    if (/^0x0*2::sui::SUI$/.test(coinType)) return { symbol: "SUI", decimals: 9 };
     const hit = this.decimalsCache.get(coinType);
     if (hit) return hit;
     try {
-      const m = await this.rpc<{ symbol: string; decimals: number } | null>("suix_getCoinMetadata", [coinType]);
+      const d = await this.query<{ coinMetadata: { symbol: string; decimals: number } | null }>(
+        "query($t: String!) { coinMetadata(coinType: $t) { symbol decimals } }", { t: coinType });
+      const m = d.coinMetadata;
       const v = { symbol: m?.symbol ?? coinType.split("::").pop() ?? "?", decimals: m?.decimals ?? 9 };
       this.decimalsCache.set(coinType, v);
       return v;
@@ -45,36 +60,42 @@ export class TatumSui implements ChainClient {
   }
 
   async context(address: string): Promise<ChainContext> {
-    const [checkpoint, all, gas, txs] = await Promise.all([
-      this.rpc<string>("sui_getLatestCheckpointSequenceNumber"),
-      this.rpc<{ coinType: string; totalBalance: string }[]>("suix_getAllBalances", [address]),
-      this.rpc<string>("suix_getReferenceGasPrice"),
-      this.rpc<{ data: { timestampMs?: string }[] }>("suix_queryTransactionBlocks", [
-        { filter: { FromAddress: address }, options: {} }, null, 50, true,
-      ]).catch(() => null),
-    ]);
+    const d = await this.query<{
+      checkpoint: { sequenceNumber: number } | null;
+      epoch: { referenceGasPrice: string } | null;
+      address: { balances: { nodes: { coinType: { repr: string }; totalBalance: string }[] } } | null;
+      transactions: { nodes: { effects: { timestamp: string | null } | null }[] } | null;
+    }>(
+      `query($a: SuiAddress!) {
+        checkpoint { sequenceNumber }
+        epoch { referenceGasPrice }
+        address(address: $a) { balances(first: 8) { nodes { coinType { repr } totalBalance } } }
+        transactions(last: 50, filter: { sentAddress: $a }) { nodes { effects { timestamp } } }
+      }`,
+      { a: address },
+    );
 
     const balances: Balance[] = [];
-    for (const b of all.slice(0, 8)) {
-      const m = await this.meta(b.coinType);
-      balances.push({ symbol: m.symbol, coinType: b.coinType, decimals: m.decimals, amount: Number(b.totalBalance) / 10 ** m.decimals });
+    for (const b of d.address?.balances.nodes ?? []) {
+      const coinType = b.coinType.repr;
+      const m = await this.meta(coinType);
+      balances.push({ symbol: m.symbol, coinType, decimals: m.decimals, amount: Number(b.totalBalance) / 10 ** m.decimals });
     }
     balances.sort((a, b) => (a.symbol === "SUI" ? -1 : b.symbol === "SUI" ? 1 : b.amount - a.amount));
 
     let txLast24h: number | null = null;
-    if (txs) {
+    if (d.transactions) {
       const cutoff = Date.now() - 24 * 3600_000;
-      const stamped = txs.data.filter((t) => t.timestampMs);
-      txLast24h = stamped.length ? stamped.filter((t) => Number(t.timestampMs) >= cutoff).length : null;
+      txLast24h = d.transactions.nodes.filter((t) => t.effects?.timestamp && Date.parse(t.effects.timestamp) >= cutoff).length;
     }
 
     return {
       source: this.source,
       address,
-      checkpoint: Number(checkpoint),
+      checkpoint: d.checkpoint ? Number(d.checkpoint.sequenceNumber) : null,
       balances,
       txLast24h,
-      gasPriceMist: Number(gas),
+      gasPriceMist: d.epoch ? Number(d.epoch.referenceGasPrice) : null,
       fetchedAt: new Date().toISOString(),
     };
   }

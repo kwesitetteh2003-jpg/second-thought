@@ -36,7 +36,7 @@ Nothing has been signed up for, funded, submitted, or published on your behalf. 
 14. **After results (Nov 17):** if you win, reply by email with a USDC-capable wallet within 14 days and do the test transaction.
 
 ## Follow-up ideas (if time)
-- Move the Tatum client from JSON-RPC to Tatum's gRPC gateway (`sui-mainnet-grpc.gateway.tatum.io:443`). The JSON-RPC deprecation is a judging risk on "Technical quality".
+- Optional: add Tatum's gRPC gateway (`sui-mainnet-grpc.gateway.tatum.io:443`) for live checkpoint streaming. The client already uses GraphQL, since Sui's JSON-RPC is retired.
 - Read-only wallet connect so the address isn't an env var.
 - Page `listMemories` for long journals; persist pending decisions.
 - Spending and subscription habits as additional memory kinds.

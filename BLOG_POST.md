@@ -31,7 +31,7 @@ The sentence is what makes **semantic recall** work and keeps every memory human
 
 ## How it uses Tatum
 
-A decision about "40% of my SUI" needs to know how much SUI that is. The Sui gateway from Tatum gives the app live **balances**, the **latest checkpoint**, **reference gas price**, and my **recent transaction count** (`suix_getAllBalances`, `sui_getLatestCheckpointSequenceNumber`, `suix_getReferenceGasPrice`, `suix_queryTransactionBlocks`). The 24-hour transaction count is a signal too: a day with eight or more transactions is usually an impulsive day, and the engine adds risk for it. [[Add: your real Tatum experience and any latency/limits you hit]]
+A decision about "40% of my SUI" needs to know how much SUI that is. The Sui gateway from Tatum gives the app live **balances**, the **latest checkpoint**, **reference gas price**, and my **recent transaction count** (one GraphQL query to Tatum's Sui gateway). The 24-hour transaction count is a signal too: a day with eight or more transactions is usually an impulsive day, and the engine adds risk for it. [[Add: your real Tatum experience and any latency/limits you hit]]
 
 ## How it learned over time
 
@@ -54,7 +54,7 @@ In the sample journal (a fictional trader, "Kofi", 14 trades): the move "sell 40
 - The Walrus Memory SDK doesn't read environment variables, so the app passes the key, account id and server URL explicitly.
 - `rememberBulkAndWait` takes up to 20 memories per request. The store script chunks by 20 and skips memories already stored.
 - The SDK's offline mock doesn't implement `listMemories`, so the app rebuilds state through `recall`.
-- Sui is moving off JSON-RPC toward gRPC; a Tatum gRPC endpoint exists, and moving to it is next on my list.
+- Sui retired JSON-RPC during the build, so I moved the client to Tatum's GraphQL endpoint; gRPC streaming is next on my list.
 
 ## What's next
 

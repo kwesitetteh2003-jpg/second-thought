@@ -20,9 +20,9 @@ Second Thought is a pre-flight check for money moves. You say what you're about 
 **Problem.** People repeat the same costly money habits (panic sells, tip-driven buys, 2 AM trades) because the lesson from last time isn't there at decision time.
 **Solution.** A co-pilot that turns your own history into a second opinion. It never signs or sends transactions.
 **Walrus Memory.** One readable sentence + compact tags per memory (`trade`, `lesson`, `pref`) stored with `rememberAndWait`/`rememberBulkAndWait` and read with semantic `recall`. No other database: restart the server and everything is rebuilt from memory.
-**Tatum.** The Sui gateway supplies balances, checkpoint, gas price and 24h activity (`suix_getAllBalances`, `sui_getLatestCheckpointSequenceNumber`, `suix_getReferenceGasPrice`, `suix_queryTransactionBlocks`) to size the move and flag busy days.
+**Tatum.** The Sui gateway supplies balances, checkpoint, gas price and 24h activity (one GraphQL query: checkpoint, reference gas price, balances, recent sent transactions) to size the move and flag busy days.
 **How it learns.** Pattern statistics by trigger/mood/size/hour over *your actual* trades; auto-written lessons at n≥3; a strictness multiplier (0.7×–1.8×) that rises when you override a warning and lose. Verified in tests and visible in the UI: same move 2.32 → 3.48 after one overridden loss; Learning tab replays GO → PAUSE → STOP.
-**Honest limits.** In the README: sample journal is fictional; "learning" is transparent statistics, not an LLM; advice only; JSON-RPC (gRPC migration next).
+**Honest limits.** In the README: sample journal is fictional; "learning" is transparent statistics, not an LLM; advice only; GraphQL today, gRPC streaming next.
 
 ## Field-by-field
 

@@ -85,7 +85,7 @@ The sentence makes **semantic recall** work and lets a human audit the memory. T
 4. *Replay:* the Learning tab replays one move against 0…N memories: GO → PAUSE → STOP, step by step.
 5. *Safer size:* a smaller size that has worked before is suggested ("moves of 15% or less have worked for you").
 
-**Where Tatum is used.** `server/chain/tatum.ts` calls the Tatum Sui gateway (`https://sui-mainnet.gateway.tatum.io`, header `x-api-key`) with `suix_getAllBalances`, `suix_getCoinMetadata`, `sui_getLatestCheckpointSequenceNumber`, `suix_getReferenceGasPrice` and `suix_queryTransactionBlocks`. Balances size the move ("≈ 1,928 SUI"); the 24-hour transaction count is a risk signal (≥ 8 transactions in 24h adds risk: busy days are impulsive days).
+**Where Tatum is used.** `server/chain/tatum.ts` queries the Tatum Sui mainnet gateway over GraphQL (`https://sui-mainnet.gateway.tatum.io/graphql`, header `x-api-key`) in one request: latest checkpoint, epoch reference gas price, the wallet's balances, and its last 50 sent transactions, plus `coinMetadata` for non-SUI coins. Balances size the move ("≈ 1,928 SUI"); the 24-hour transaction count is a risk signal (≥ 8 transactions in 24h adds risk: busy days are impulsive days).
 
 **Strictness.** `+0.25` each time you override a warning and lose, `-0.1` when you override and it was fine, clamped to 0.7–1.8×. Verdict thresholds: PAUSE ≥ 0.5, STOP ≥ 1.2. Default guard-rails (clearly labelled "not learned" in the UI): move > 50% of a balance +0.25, > 25% +0.10.
 
@@ -166,7 +166,7 @@ Stack: Vite 8 · React 19 · TypeScript 5.9 · Tailwind CSS v4 · Framer Motion 
 - **The sample journal is fictional.** "Kofi" and his 14 trades are invented to demonstrate learning. The mainnet memories you store with `memories:store` are those sample memories unless you edit the seed. Memories created by actually using the app in live mode are real writes. Say which is which in your submission.
 - **"Learning" here is transparent statistics, not an LLM.** Pattern averages, a win rate, and a strictness multiplier learned from overrides. That is deliberate: every verdict can cite its memories. It is also simple. No model is fine-tuned, and there is no ML claim.
 - **Advice only.** It never signs or sends a transaction, and there is no wallet connect. One watched address comes from `WATCH_ADDRESS`.
-- **Tatum via JSON-RPC.** Sui is deprecating JSON-RPC in favour of gRPC/GraphQL; Tatum also exposes `sui-mainnet-grpc.gateway.tatum.io:443`. Migrating is a follow-up (listed in `NEXT_STEPS.md`).
+- **Tatum via GraphQL.** Sui has retired full-node JSON-RPC, so the app uses Tatum's GraphQL interface on the same gateway. Tatum's gRPC endpoint (`sui-mainnet-grpc.gateway.tatum.io:443`) would be the next step for streaming checkpoints.
 - **Pending decisions live in server RAM** (the memories do not). Restarting the API forgets unfinished pre-flights, not the journal.
 - **Recall limits.** The journal is rebuilt from three recall queries (limit 100 each, 15 s cache). Fine for hundreds of memories; a long-lived journal should page `listMemories`.
 - **Data is Seal-encrypted on Walrus**, but the delegate key lives in your server's environment. Treat it like a password.
