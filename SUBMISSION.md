@@ -3,7 +3,7 @@
 Form: https://recall-tatum-walrus.vercel.app · **Deadline: Nov 10 2026, 17:00 Accra time (17:00 UTC)** · One submission per person. **Rufus submits this himself. Nothing has been submitted.**
 
 ## Pick
-- **Track:** Consumer Finance Apps (select this on the form if there's a track field).
+- **Track:** Consumer Finance Apps. The form (checked 29 Oct) has no track field, so say it in the first line of the project description.
 - **Also targets:** Best Walrus Memory special prize.
 - **Not targeted:** Tatum AI Builder bonus (not built primarily with ai.tatum.io).
 
@@ -49,6 +49,29 @@ Second Thought is a pre-flight check for money moves. You say what you're about 
 - The offline `MemWalMock` doesn't implement `listMemories`, so a mock-driven app needs a different path from a live one. We rebuilt state from `recall`.
 - Great for apps where "what happened last time" matters. [[Your latency / cost / onboarding observations]]
 
+## Form fields as of 29 Oct (re-checked against the live form)
+
+Required: Email, Discord handle, LinkedIn URL, How did you hear (dropdown), Is this your first Web3 project (Yes/No), Tatum ID, SUI address, Account ID (SUI), MEMWAL_AGENT_ID, Project description, Short demo video URL, GitHub repo URL, Walrus experience, Tatum AI Builder experience, and the "accept the event rules" checkbox.
+Optional: Telegram ID, which community/account you heard from, Additional documentation (put the blog URL here), One bug or friction point with Walrus Memory, Social post links (extra points).
+There is no track field and no project-name field.
+
+## Draft answers (edit into your own words before pasting)
+
+**Project description:** Consumer Finance Apps track. Then the short description above.
+
+**How was your experience building with Walrus?**
+Good overall. The SDK is small and the remember/recall model fit the idea directly: every memory is one readable sentence plus tags, and the app rebuilds its whole model from recall with no other database. Storing on mainnet through the hosted relayer was simple, and the writes were sponsored, so it cost me nothing. A few things to know: the SDK doesn't read environment variables (you pass key, account ID and server URL explicitly), rememberBulkAndWait takes at most 20 memories per call, and recalling the full journal takes about 4 to 5 seconds from a deployed app, which is fine for a "pause and think" product but would be slow for anything that needs to feel instant. More examples of listing and filtering memories by tag would help.
+
+**How was your experience building with the Tatum AI Builder?**
+I didn't use the Tatum AI Builder for this project. I built it by hand and used Tatum's Sui gateway directly (GraphQL) for wallet balances, checkpoint, gas price and recent activity. Responses came back in about a tenth of a second from the deployed app.
+(Rufus: change this if you did try ai.tatum.io.)
+
+**One bug or friction point with Walrus Memory (optional):**
+The offline MemWalMock doesn't implement listMemories, so code that works against the mock needs a different path from code that runs live. I ended up rebuilding state from recall in both modes.
+
+**Additional documentation:** [[blog URL]]
+**Social post links:** [[X / LinkedIn post URLs]]. Drafts are in SOCIAL_POST.md.
+
 ## Final checklist (tick before submitting)
 
 - [ ] Tatum API key created; `npm run check:tatum` passes
@@ -58,7 +81,7 @@ Second Thought is a pre-flight check for money moves. You say what you're about 
 - [ ] App in live mode shows **Walrus mainnet** + **Tatum · Sui mainnet** pills
 - [ ] Repo public on GitHub; no secrets (`git ls-files | grep -E "^\.env"` shows only `.env.example`); README placeholders updated
 - [ ] Deployed demo URL (optional but "working demo" is a requirement; a video + runnable repo may suffice) [[URL]]
-- [ ] 2 to 3 min video recorded in live mode and uploaded [[URL]]
+- [ ] 2 to 3 min video recorded in live mode (done: video/second-thought-demo.mp4, 2:49) and uploaded [[URL]]
 - [ ] Blog post published with real details filled in [[URL]]
 - [ ] Shared on X and/or LinkedIn tagging @Tatum_io @WalrusFoundation [[URL]] (bonus points)
 - [ ] Form completed by you, with your own contact details, before **Nov 10 17:00 Accra time**
