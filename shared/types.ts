@@ -153,5 +153,7 @@ export interface StatusInfo {
   memory: { backend: string; honest: string; network: string; namespace: string; count: number; onMainnet: boolean };
   chain: { backend: string; honest: string; endpoint: string; onMainnet: boolean };
   canReset: boolean;
+  /** "open": anyone can write; "owner": only the owner key writes, visitors get a preview. */
+  writes: "open" | "owner";
   minMemoriesRequired: number;
 }

@@ -12,12 +12,12 @@ export function LearnedPanel({ res, onAgain, onLearning }: { res: OutcomeRespons
 
         <blockquote className="ruled mt-6 border-l-2 border-mem pl-4 text-[15px] leading-[28px] text-ink">
           {plain(res.written.text)}
-          <footer className="mono mt-1 text-[10.5px] leading-5 text-faint">stored as {shortId(res.written.blobId)}</footer>
+          <footer className="mono mt-1 text-[10.5px] leading-5 text-faint">{res.persisted === false ? "preview only: this public demo doesn't write to the owner's Walrus Memory" : <>stored as {shortId(res.written.blobId)}</>}</footer>
         </blockquote>
 
         {res.lessons.map((l) => (
           <motion.div key={l.blobId} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-5 border-l-2 border-pause pl-4">
-            <div className="eyebrow mb-1 !text-pause">New lesson written</div>
+            <div className="eyebrow mb-1 !text-pause">{res.persisted === false ? "New lesson (preview)" : "New lesson written"}</div>
             <p className="text-[14.5px] leading-relaxed">{plain(l.text)}</p>
           </motion.div>
         ))}

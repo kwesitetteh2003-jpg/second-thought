@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import crypto from "node:crypto";
-import type { Decision, Intent, StatusInfo, TradeRecord, Verdict } from "../shared/types";
+import type { Decision, Intent, StatusInfo, StoredMemory, TradeRecord, Verdict } from "../shared/types";
 import { ACTIONS, MOODS, TRIGGERS } from "../shared/types";
 import { deriveLessons, evaluate, replay, strictnessFrom, toJournal } from "../shared/engine";
 import { buildSeed } from "../seed/journal";
+import { encode } from "../shared/codec";
 import type { Journal } from "./memory/journal";
 import type { ChainClient } from "./chain/tatum";
 import { MIN_MEMORIES, type Config } from "./config";
@@ -37,6 +38,15 @@ export function createApp({ cfg, journal, chain }: Deps) {
 
   const decisions = new Map<string, Decision>();
   const today = () => new Date().toISOString().slice(0, 10);
+  // Public visitors must not write to the owner's Walrus Memory account. When a write key is set,
+  // only requests carrying it are stored; everyone else gets the same result as a dry run.
+  const canWrite = !!cfg.writeKey;
+  const isOwner = (req: express.Request) => {
+    if (!cfg.writeKey) return true;
+    const given = Buffer.from(String(req.get("x-owner-key") ?? ""));
+    const want = Buffer.from(cfg.writeKey);
+    return given.length === want.length && crypto.timingSafeEqual(given, want);
+  };
   const wrap = (fn: express.RequestHandler): express.RequestHandler => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch((e: Error) => {
       console.error(e);
@@ -56,6 +66,7 @@ export function createApp({ cfg, journal, chain }: Deps) {
         onMainnet: chain.source === "tatum-sui-rpc",
       },
       canReset: cfg.mode === "demo",
+      writes: canWrite ? "owner" : "open",
       minMemoriesRequired: MIN_MEMORIES,
     };
     res.json(info);
@@ -116,17 +127,21 @@ export function createApp({ cfg, journal, chain }: Deps) {
       kind: "trade", date: today(), action: d.intent.action, asset: d.intent.asset, pct: d.intent.pct, trigger: d.intent.trigger,
       mood: d.intent.mood, hour: d.intent.hour, pnl: Math.round(pnl * 10) / 10, acted: d.acted, warned: d.verdict.level, overrode: !!d.overrode,
     };
-    const before = toJournal(await journal.loadAll(true));
-    const written = await journal.write(rec);
-    const after = toJournal([...(await journal.loadAll(true)), written]);
+    const existing = await journal.loadAll(true);
+    const before = toJournal(existing);
+    const persist = isOwner(req);
+    const preview = (rec: StoredMemory["record"], i: number): StoredMemory =>
+      ({ blobId: `preview-${d.id.slice(0, 8)}-${i}`, createdAt: new Date().toISOString(), text: encode(rec), record: rec });
+    const written = persist ? await journal.write(rec) : preview(rec, 0);
+    const after = toJournal(persist ? [...(await journal.loadAll(true)), written] : [...existing, written]);
     const newLessons = deriveLessons(after.trades, after.lessons.map((l) => l.rec), today());
-    const lessonMems = [];
-    for (const l of newLessons) lessonMems.push(await journal.write(l));
+    const lessonMems: StoredMemory[] = [];
+    for (const [i, l] of newLessons.entries()) lessonMems.push(persist ? await journal.write(l) : preview(l, i + 1));
     d.outcomeLogged = true;
 
     const ctx = await chain.context(cfg.watchAddress).catch(() => undefined);
-    const nextVerdict = evaluate(d.intent, toJournal([...(await journal.loadAll(true))]), ctx);
-    res.json({ written, lessons: lessonMems, before: d.verdict, after: nextVerdict, memoriesBefore: before.trades.length + before.lessons.length });
+    const nextVerdict = evaluate(d.intent, toJournal(persist ? await journal.loadAll(true) : [...existing, written, ...lessonMems]), ctx);
+    res.json({ written, lessons: lessonMems, before: d.verdict, after: nextVerdict, memoriesBefore: before.trades.length + before.lessons.length, persisted: persist });
   }));
 
   app.post("/api/replay", wrap(async (req, res) => {

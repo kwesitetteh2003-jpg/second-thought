@@ -119,7 +119,10 @@ MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
 MEMWAL_NAMESPACE=second-thought
 TATUM_API_KEY=<from dashboard.tatum.io>
 WATCH_ADDRESS=<your SUI address>
+OWNER_WRITE_KEY=<any long random string; optional>
 ```
+
+If `OWNER_WRITE_KEY` is set, only the owner can write new memories. A public visitor still runs pre-flights and logs outcomes, but sees a preview of the new memory and lesson, and nothing is written to the account. To write from your own browser, open the site once with `#owner=<key>` at the end of the URL. It's kept in that browser's local storage and the URL hash is cleared.
 
 ```bash
 npm run check:tatum         # one read-only RPC call: proves the Tatum key works

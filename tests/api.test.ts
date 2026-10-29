@@ -83,3 +83,35 @@ describe("API (demo mode)", () => {
     await post("/api/demo/reset", { to: "seed" });
   });
 });
+
+describe("public write guard", () => {
+  it("without the owner key, an outcome is a preview and nothing is stored; with it, the memory is written", async () => {
+    const cfg = readConfig({ SECOND_THOUGHT_MODE: "demo", OWNER_WRITE_KEY: "letmein" } as any);
+    const journal = createDemoJournal("guard");
+    await seedDemo(journal);
+    const srv = createApp({ cfg, journal, chain: new FixtureChain() }).listen(0, "127.0.0.1");
+    await new Promise((r) => srv.once("listening", r));
+    const b = `http://127.0.0.1:${(srv.address() as AddressInfo).port}`;
+    const p = (path: string, body: unknown, h: Record<string, string> = {}) =>
+      fetch(b + path, { method: "POST", headers: { "content-type": "application/json", ...h }, body: JSON.stringify(body) });
+    try {
+      expect((await (await fetch(b + "/api/status")).json()).writes).toBe("owner");
+      const count = async () => (await (await fetch(b + "/api/memories")).json()).counts.total;
+      const start = await count();
+
+      const r1 = await (await p("/api/preflight", panic)).json();
+      await p(`/api/decisions/${r1.decision.id}/choice`, { acted: true });
+      const o1 = await (await p(`/api/decisions/${r1.decision.id}/outcome`, { pnl: -9 }, { "x-owner-key": "wrong" })).json();
+      expect(o1.persisted).toBe(false);
+      expect(o1.written.blobId).toMatch(/^preview-/);
+      expect(o1.after.risk).toBeGreaterThanOrEqual(o1.before.risk);
+      expect(await count()).toBe(start);
+
+      const r2 = await (await p("/api/preflight", panic)).json();
+      await p(`/api/decisions/${r2.decision.id}/choice`, { acted: true });
+      const o2 = await (await p(`/api/decisions/${r2.decision.id}/outcome`, { pnl: -9 }, { "x-owner-key": "letmein" })).json();
+      expect(o2.persisted).toBe(true);
+      expect(await count()).toBeGreaterThan(start);
+    } finally { srv.close(); }
+  });
+});

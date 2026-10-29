@@ -33,10 +33,10 @@ Second Thought is a pre-flight check for money moves. You say what you're about 
 | LinkedIn | [[Rufus]] |
 | How did you hear about this event? | [[Rufus: be truthful]] |
 | Is this your first Web3 project? | [[Rufus: truthful yes/no]] |
-| Tatum ID | [[from dashboard.tatum.io, after you sign up]] |
-| SUI address | [[the funded wallet you used in memory.walrus.xyz]] |
-| Account ID (SUI) | [[MemWal account object ID from memory.walrus.xyz]] |
-| MEMWAL_AGENT_ID | [[Public key of the delegate key you created, shown in the Memory app. This is the `memwal_agent_id` on your memories. Public key only. NEVER the private key.]] |
+| Tatum ID | 6ae34459e6ae1648d9feaee2 |
+| SUI address | 0xedca34251d3f0ed238588ba4d14b3d60bc45f83b1306d51968a4b5a6f1e507e7 |
+| Account ID (SUI) | 0x93b2ebb1769539177c541e01bfd57132be586e813979db9902a1880daba3519f |
+| MEMWAL_AGENT_ID | badf4bfa1e9c8a8124239a6bf3d64ff6d2b7914157c7f0beec42730a1262a729 (delegate public key, label "Second app") |
 | Project description | Short description above |
 | Short demo video (2 to 3 min) | [[URL]]. Follow `DEMO_SCRIPT.md` |
 | GitHub repo | [[public URL]] |

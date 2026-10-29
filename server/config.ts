@@ -19,6 +19,8 @@ export interface Config {
   memwal: { key: string; accountId: string; serverUrl: string };
   tatum: { apiKey: string; url: string };
   watchAddress: string;
+  /** If set, writing new memories needs this value in the x-owner-key header. Others get a dry-run preview. */
+  writeKey: string;
 }
 
 export const DEMO_ADDRESS = "0x" + "d3a0".repeat(16); // obviously fictional fixture address
@@ -40,6 +42,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env, needs = { memwa
     },
     tatum: { apiKey: env.TATUM_API_KEY ?? "", url: env.TATUM_SUI_RPC_URL ?? "https://sui-mainnet.gateway.tatum.io" },
     watchAddress: env.WATCH_ADDRESS ?? "",
+    writeKey: env.OWNER_WRITE_KEY ?? "",
   };
   if (mode === "live") {
     const missing = [
