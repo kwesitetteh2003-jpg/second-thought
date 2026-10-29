@@ -167,7 +167,7 @@ Stack: Vite 8 · React 19 · TypeScript 5.9 · Tailwind CSS v4 · Framer Motion 
 
 - **Mainnet and Tatum are unproven until keys exist.** The live code path is written against the SDK and Tatum docs and unit-tested with mocked fetch, but has not been run against the hosted relayer or a real Tatum key from this repo yet. Do that (`NEXT_STEPS.md`) before submitting, and record the demo in live mode.
 - **The sample journal is fictional.** "Kofi" and his 14 trades are invented to demonstrate learning. The mainnet memories you store with `memories:store` are those sample memories unless you edit the seed. Memories created by actually using the app in live mode are real writes. Say which is which in your submission.
-- **"Learning" here is transparent statistics, not an LLM.** Pattern averages, a win rate, and a strictness multiplier learned from overrides. That is deliberate: every verdict can cite its memories. It is also simple. No model is fine-tuned, and there is no ML claim.
+- **"Learning" here is a transparent rules engine built on your own memories.** Pattern averages, a win rate, and a strictness multiplier learned from overrides. That is deliberate: every verdict can cite its memories. It is also simple: no trained model, no black box.
 - **Advice only.** It never signs or sends a transaction, and there is no wallet connect. One watched address comes from `WATCH_ADDRESS`.
 - **Tatum via GraphQL.** Sui has retired full-node JSON-RPC, so the app uses Tatum's GraphQL interface on the same gateway. Tatum's gRPC endpoint (`sui-mainnet-grpc.gateway.tatum.io:443`) would be the next step for streaming checkpoints.
 - **Pending decisions live in server RAM** (the memories do not). Restarting the API forgets unfinished pre-flights, not the journal.
@@ -187,7 +187,7 @@ No secret is in this repo. `.env*` (except `.env.example`) is git-ignored, and `
 
 The interface is set like a printed ledger: warm paper, ink, and three earth-pigment verdict colours (green GO, ochre PAUSE, brick STOP), with indigo for memory and one ember accent. The landing story uses scroll-linked motion (Framer Motion `useScroll`/`useTransform`): a sticky "2 AM" scene whose clock and copy are scrubbed by scroll, plus light parallax on the photos. With `prefers-reduced-motion` the story renders as a static page.
 
-**Photos** (real photographs, Pexels License, free to use; resized to 640/1080/1600 px WebP and self-hosted in `public/photos/`, no AI-generated people):
+**Photos** (real photographs, Pexels License, free to use; resized to 640/1080/1600 px WebP and self-hosted in `public/photos/`; every person shown is a real photo from Pexels):
 
 | File | Photographer | Source |
 | --- | --- | --- |
